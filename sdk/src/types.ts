@@ -68,6 +68,11 @@ export enum UserStatus {
 	ADVANCED_LP = 8,
 }
 
+export class MarginMode {
+	static readonly DEFAULT = { default: {} };
+	static readonly HIGH_LEVERAGE = { highLeverage: {} };
+}
+
 export class ContractType {
 	static readonly PERPETUAL = { perpetual: {} };
 	static readonly FUTURE = { future: {} };
@@ -661,6 +666,9 @@ export type PerpMarketAccount = {
 	fuelBoostTaker: number;
 	fuelBoostMaker: number;
 	fuelBoostPosition: number;
+
+	highLeverageMarginRatioInitial: number;
+	highLeverageMarginRatioMaintenance: number;
 };
 
 export type HistoricalOracleData = {
@@ -950,6 +958,7 @@ export type UserAccount = {
 	openAuctions: number;
 	hasOpenAuction: boolean;
 	lastFuelBonusUpdateTs: number;
+	marginMode: MarginMode;
 };
 
 export type SpotPosition = {
@@ -1056,12 +1065,22 @@ export const DefaultOrderParams: OrderParams = {
 	auctionEndPrice: null,
 };
 
-export type SwiftOrderParamsMessage = {
-	marketIndex: number;
-	swiftOrderParams: OptionalOrderParams[];
-	expectedOrderId: number;
-	marketType: MarketType;
+export type SwiftServerMessage = {
 	slot: BN;
+	swiftOrderSignature: Uint8Array;
+};
+
+export type SwiftOrderParamsMessage = {
+	swiftOrderParams: OptionalOrderParams;
+	expectedOrderId: number;
+	subAccountId: number;
+	takeProfitOrderParams: SwiftTriggerOrderParams | null;
+	stopLossOrderParams: SwiftTriggerOrderParams | null;
+};
+
+export type SwiftTriggerOrderParams = {
+	triggerPrice: BN;
+	baseAssetAmount: BN;
 };
 
 export type MakerInfo = {
@@ -1290,4 +1309,10 @@ export type SignedTxData = {
 	signedTx: Transaction | VersionedTransaction;
 	lastValidBlockHeight?: number;
 	blockHash: string;
+};
+
+export type HighLeverageModeConfig = {
+	maxUsers: number;
+	currentUsers: number;
+	reduceOnly: boolean;
 };
