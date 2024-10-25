@@ -23,6 +23,7 @@ use crate::math::orders::{estimate_price_from_side, find_bids_and_asks_from_user
 use crate::math::safe_math::SafeMath;
 use crate::math::spot_withdraw::validate_spot_market_vault_amount;
 use crate::optional_accounts::{get_token_mint, update_prelaunch_oracle};
+use crate::state::events::SwiftOrderRecord;
 use crate::state::fill_mode::FillMode;
 use crate::state::fulfillment_params::drift::MatchFulfillmentParams;
 use crate::state::fulfillment_params::openbook_v2::OpenbookV2FulfillmentParams;
@@ -48,7 +49,8 @@ use crate::state::spot_market_map::{
 };
 use crate::state::state::State;
 use crate::state::user::{
-    MarginMode, MarketType, OrderStatus, OrderTriggerCondition, OrderType, User, UserStats,
+    MarginMode, MarketType, OrderStatus, OrderTriggerCondition, OrderType, ReferrerStatus, User,
+    UserStats,
 };
 use crate::state::user_map::{load_user_map, load_user_maps, UserMap, UserStatsMap};
 use crate::validation::sig_verification::verify_ed25519_ix;
@@ -477,6 +479,21 @@ pub fn handle_update_user_fuel_bonus<'c: 'info, 'info>(
 #[access_control(
     exchange_not_paused(&ctx.accounts.state)
 )]
+pub fn handle_update_user_stats_referrer_info<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, UpdateUserStatsReferrerInfo<'info>>,
+) -> Result<()> {
+    let mut user_stats = load_mut!(ctx.accounts.user_stats)?;
+
+    if !user_stats.referrer.eq(&Pubkey::default()) {
+        user_stats.referrer_status |= ReferrerStatus::IsReferred as u8;
+    }
+
+    Ok(())
+}
+
+#[access_control(
+    exchange_not_paused(&ctx.accounts.state)
+)]
 pub fn handle_update_user_open_orders_count<'info>(ctx: Context<UpdateUserIdle>) -> Result<()> {
     let mut user = load_mut!(ctx.accounts.user)?;
 
@@ -623,6 +640,17 @@ pub fn place_swift_taker_order<'c: 'info, 'info>(
             ..PlaceOrderOptions::default()
         },
     )?;
+
+    let order_params_hash =
+        solana_program::hash::hash(&taker_order_params_message.try_to_vec().unwrap()).to_string();
+
+    emit!(SwiftOrderRecord {
+        user: taker_key,
+        user_next_order_id: taker_next_order_id,
+        matching_order_params: matching_taker_order_params.clone(),
+        hash: order_params_hash,
+        swift_order_slot: order_slot,
+    });
 
     if let Some(stop_loss_order_params) = taker_order_params_message.stop_loss_order_params {
         let stop_loss_order = OrderParams {
@@ -2124,6 +2152,14 @@ pub struct UpdateUserFuelBonus<'info> {
         mut,
         constraint = is_stats_for_user(&user, &user_stats)?
     )]
+    pub user_stats: AccountLoader<'info, UserStats>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateUserStatsReferrerInfo<'info> {
+    pub state: Box<Account<'info, State>>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
     pub user_stats: AccountLoader<'info, UserStats>,
 }
 
