@@ -11,11 +11,13 @@ import bs58 from 'bs58';
 import {
 	ASSOCIATED_TOKEN_PROGRAM_ID,
 	createAssociatedTokenAccountInstruction,
+	createAssociatedTokenAccountIdempotentInstruction,
 	createCloseAccountInstruction,
 	createInitializeAccountInstruction,
 	getAssociatedTokenAddress,
 	TOKEN_2022_PROGRAM_ID,
 	TOKEN_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
 import {
 	DriftClientMetricsEvents,
@@ -169,6 +171,7 @@ import pythSolanaReceiverIdl from './idl/pyth_solana_receiver.json';
 import { asV0Tx, PullFeed } from '@switchboard-xyz/on-demand';
 import { gprcDriftClientAccountSubscriber } from './accounts/grpcDriftClientAccountSubscriber';
 import nacl from 'tweetnacl';
+import { digest } from './util/digest';
 
 type RemainingAccountParams = {
 	userAccounts: UserAccount[];
@@ -5545,7 +5548,7 @@ export class DriftClient {
 
 	public signSwiftServerMessage(message: SwiftServerMessage): Buffer {
 		const swiftServerMessage = Uint8Array.from(
-			this.encodeSwiftServerMessage(message)
+			digest(this.encodeSwiftServerMessage(message))
 		);
 		return this.signMessage(swiftServerMessage);
 	}
@@ -5554,7 +5557,7 @@ export class DriftClient {
 		orderParamsMessage: SwiftOrderParamsMessage
 	): Buffer {
 		const takerOrderParamsMessage = Uint8Array.from(
-			this.encodeSwiftOrderParamsMessage(orderParamsMessage)
+			digest(this.encodeSwiftOrderParamsMessage(orderParamsMessage))
 		);
 		return this.signMessage(takerOrderParamsMessage);
 	}
@@ -5635,21 +5638,20 @@ export class DriftClient {
 			Ed25519Program.createInstructionWithPublicKey({
 				publicKey: new PublicKey(this.swiftID).toBytes(),
 				signature: Uint8Array.from(swiftSignature),
-				message: Uint8Array.from(encodedSwiftServerMessage),
+				message: Uint8Array.from(digest(encodedSwiftServerMessage)),
 			});
 
 		const swiftOrderParamsSignatureIx =
 			Ed25519Program.createInstructionWithPublicKey({
 				publicKey: takerInfo.takerUserAccount.authority.toBytes(),
 				signature: Uint8Array.from(swiftOrderParamsSignature),
-				message: Uint8Array.from(encodedSwiftOrderParamsMessage),
+				message: Uint8Array.from(digest(encodedSwiftOrderParamsMessage)),
 			});
 
 		const placeTakerSwiftPerpOrderIx =
 			await this.program.instruction.placeSwiftTakerOrder(
 				encodedSwiftServerMessage,
 				encodedSwiftOrderParamsMessage,
-				swiftSignature,
 				{
 					accounts: {
 						state: await this.getStatePublicKey(),
@@ -7406,6 +7408,22 @@ export class DriftClient {
 		const isSolMarket = spotMarketAccount.mint.equals(WRAPPED_SOL_MINT);
 		const createWSOLTokenAccount =
 			isSolMarket && collateralAccountPublicKey.equals(this.wallet.publicKey);
+
+		// create associated token account because it may not exist
+		const associatedTokenAccountPublicKey = getAssociatedTokenAddressSync(
+			spotMarketAccount.mint,
+			this.wallet.publicKey,
+			true
+		);
+
+		addIfStakeIxs.push(
+			await createAssociatedTokenAccountIdempotentInstruction(
+				this.wallet.publicKey,
+				associatedTokenAccountPublicKey,
+				this.wallet.publicKey,
+				spotMarketAccount.mint
+			)
+		);
 
 		let tokenAccount;
 
