@@ -44,6 +44,7 @@ import {
 import { PEG_PRECISION, PostOnlyParams } from '../sdk/src';
 import dotenv from 'dotenv';
 import { digest } from '../sdk/src/util/digest';
+import { nanoid } from 'nanoid';
 dotenv.config();
 
 describe('place and make swift order', () => {
@@ -210,6 +211,10 @@ describe('place and make swift order', () => {
 			},
 		});
 		await takerDriftClientUser.subscribe();
+		await takerDriftClient.initializeSwiftUserOrders(
+			takerDriftClientUser.userAccountPublicKey,
+			32
+		);
 
 		const marketIndex = 0;
 		const baseAssetAmount = BASE_PRECISION;
@@ -227,7 +232,6 @@ describe('place and make swift order', () => {
 		});
 		const takerOrderParamsMessage: SwiftOrderParamsMessage = {
 			swiftOrderParams: takerOrderParams,
-			expectedOrderId: 1,
 			subAccountId: 0,
 			takeProfitOrderParams: null,
 			stopLossOrderParams: null,
@@ -252,6 +256,7 @@ describe('place and make swift order', () => {
 		const swiftServerMessage: SwiftServerMessage = {
 			slot: new BN(await connection.getSlot()),
 			swiftOrderSignature: takerOrderParamsSig,
+			uuid: Uint8Array.from(Buffer.from(nanoid(8))),
 		};
 
 		const encodedSwiftServerMessage =
@@ -267,7 +272,7 @@ describe('place and make swift order', () => {
 			swiftSignature,
 			takerDriftClient.encodeSwiftOrderParamsMessage(takerOrderParamsMessage),
 			takerOrderParamsSig,
-			takerOrderParamsMessage.expectedOrderId,
+			swiftServerMessage.uuid,
 			{
 				taker: await takerDriftClient.getUserAccountPublicKey(),
 				takerUserAccount: takerDriftClient.getUserAccount(),
@@ -339,6 +344,10 @@ describe('place and make swift order', () => {
 			},
 		});
 		await takerDriftClientUser.subscribe();
+		await takerDriftClient.initializeSwiftUserOrders(
+			takerDriftClientUser.userAccountPublicKey,
+			32
+		);
 
 		const marketIndex = 0;
 		const baseAssetAmount = BASE_PRECISION;
@@ -367,7 +376,6 @@ describe('place and make swift order', () => {
 
 		const takerOrderParamsMessage: SwiftOrderParamsMessage = {
 			swiftOrderParams: takerOrderParams,
-			expectedOrderId: 1,
 			takeProfitOrderParams: null,
 			subAccountId: 0,
 			stopLossOrderParams: null,
@@ -379,6 +387,7 @@ describe('place and make swift order', () => {
 		const swiftServerMessage: SwiftServerMessage = {
 			slot: new BN(await connection.getSlot()),
 			swiftOrderSignature: takerOrderParamsSig,
+			uuid: Uint8Array.from(Buffer.from(nanoid(8))),
 		};
 
 		const encodedSwiftServerMessage =
@@ -395,7 +404,7 @@ describe('place and make swift order', () => {
 				swiftSignature,
 				takerDriftClient.encodeSwiftOrderParamsMessage(takerOrderParamsMessage),
 				takerOrderParamsSig,
-				takerOrderParamsMessage.expectedOrderId,
+				swiftServerMessage.uuid,
 				{
 					taker: await takerDriftClient.getUserAccountPublicKey(),
 					takerUserAccount: takerDriftClient.getUserAccount(),
@@ -461,6 +470,10 @@ describe('place and make swift order', () => {
 			},
 		});
 		await takerDriftClientUser.subscribe();
+		await takerDriftClient.initializeSwiftUserOrders(
+			takerDriftClientUser.userAccountPublicKey,
+			32
+		);
 
 		const marketIndex = 0;
 		const baseAssetAmount = BASE_PRECISION;
@@ -481,7 +494,6 @@ describe('place and make swift order', () => {
 		// Auth part begins
 		const takerOrderParamsMessage: SwiftOrderParamsMessage = {
 			swiftOrderParams: takerOrderParams,
-			expectedOrderId: 1,
 			subAccountId: 0,
 			takeProfitOrderParams: null,
 			stopLossOrderParams: null,
@@ -493,6 +505,7 @@ describe('place and make swift order', () => {
 		const swiftServerMessage: SwiftServerMessage = {
 			slot: new BN(await connection.getSlot()),
 			swiftOrderSignature: takerOrderParamsSig,
+			uuid: Uint8Array.from(Buffer.from(nanoid(8))),
 		};
 
 		const encodedSwiftServerMessage =
@@ -576,6 +589,10 @@ describe('place and make swift order', () => {
 			},
 		});
 		await takerDriftClientUser.subscribe();
+		await takerDriftClient.initializeSwiftUserOrders(
+			takerDriftClientUser.userAccountPublicKey,
+			32
+		);
 
 		const marketIndex = 0;
 		const baseAssetAmount = BASE_PRECISION;
@@ -593,7 +610,6 @@ describe('place and make swift order', () => {
 		});
 		const takerOrderParamsMessage: SwiftOrderParamsMessage = {
 			swiftOrderParams: takerOrderParams,
-			expectedOrderId: 1,
 			subAccountId: 0,
 			takeProfitOrderParams: null,
 			stopLossOrderParams: null,
@@ -609,6 +625,7 @@ describe('place and make swift order', () => {
 		const swiftServerMessage: SwiftServerMessage = {
 			slot: new BN(await connection.getSlot()),
 			swiftOrderSignature: takerOrderParamsSig,
+			uuid: Uint8Array.from(Buffer.from(nanoid(8))),
 		};
 
 		const encodedSwiftServerMessage =
@@ -627,7 +644,6 @@ describe('place and make swift order', () => {
 				auctionEndPrice: new BN(33).mul(PRICE_PRECISION),
 				price: new BN(33).mul(PRICE_PRECISION),
 			}),
-			expectedOrderId: 1,
 			subAccountId: 0,
 			takeProfitOrderParams: null,
 			stopLossOrderParams: null,
@@ -640,6 +656,7 @@ describe('place and make swift order', () => {
 		const swiftServerMessage2: SwiftServerMessage = {
 			slot: new BN(await connection.getSlot()),
 			swiftOrderSignature: takerOrderParamsSig2,
+			uuid: Uint8Array.from(Buffer.from(nanoid(8))),
 		};
 
 		const encodedSwiftServerMessage2 =
