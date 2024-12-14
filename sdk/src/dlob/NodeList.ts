@@ -1,5 +1,4 @@
-import { BN, isVariant, MarketTypeStr, Order } from '..';
-// import { PublicKey } from '@solana/web3.js';
+import { isVariant, MarketTypeStr, Order } from '..';
 import { createNode, DLOBNode, DLOBNodeMap } from './DLOBNode';
 
 export type SortDirection = 'asc' | 'desc';
@@ -36,13 +35,19 @@ export class NodeList<NodeType extends keyof DLOBNodeMap>
 	public insert(
 		order: Order,
 		marketType: MarketTypeStr,
-		userAccount: string
+		userAccount: string,
+		isUserProtectedMaker: boolean
 	): void {
 		if (isVariant(order.status, 'init')) {
 			return;
 		}
 
-		const newNode = createNode(this.nodeType, order, userAccount);
+		const newNode = createNode(
+			this.nodeType,
+			order,
+			userAccount,
+			isUserProtectedMaker
+		);
 
 		const orderSignature = getOrderSignature(order.orderId, userAccount);
 		if (this.nodeMap.has(orderSignature)) {
@@ -165,20 +170,4 @@ export class NodeList<NodeType extends keyof DLOBNodeMap>
 			console.log('---');
 		}
 	}
-}
-
-export function* getVammNodeGenerator(
-	price: BN | undefined
-): Generator<DLOBNode> {
-	if (!price) {
-		return;
-	}
-	yield {
-		getPrice: () => price,
-		isVammNode: () => true,
-		order: undefined,
-		userAccount: undefined,
-		isBaseFilled: () => false,
-		haveFilled: false,
-	};
 }

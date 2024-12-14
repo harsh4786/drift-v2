@@ -1,3 +1,4 @@
+use crate::state::pyth_lazer_oracle::PythLazerOracle;
 use anchor_lang::prelude::*;
 
 use crate::state::state::State;
@@ -41,7 +42,7 @@ use crate::state::paused_operations::PerpOperation;
 use drift_macros::assert_no_slop;
 use static_assertions::const_assert_eq;
 
-use super::oracle::PrelaunchOracle;
+use super::oracle_map::OracleIdentifier;
 
 #[cfg(test)]
 mod tests;
@@ -243,7 +244,7 @@ pub struct PerpMarket {
     /// fuel multiplier for perp maker
     /// precision: 10
     pub fuel_boost_maker: u8,
-    pub padding1: u8,
+    pub pool_id: u8,
     pub high_leverage_margin_ratio_initial: u16,
     pub high_leverage_margin_ratio_maintenance: u16,
     pub padding: [u8; 38],
@@ -283,7 +284,7 @@ impl Default for PerpMarket {
             fuel_boost_position: 0,
             fuel_boost_taker: 0,
             fuel_boost_maker: 0,
-            padding1: 0,
+            pool_id: 0,
             high_leverage_margin_ratio_initial: 0,
             high_leverage_margin_ratio_maintenance: 0,
             padding: [0; 38],
@@ -300,6 +301,10 @@ impl MarketIndexOffset for PerpMarket {
 }
 
 impl PerpMarket {
+    pub fn oracle_id(&self) -> OracleIdentifier {
+        (self.amm.oracle, self.amm.oracle_source)
+    }
+
     pub fn is_in_settlement(&self, now: i64) -> bool {
         let in_settlement = matches!(
             self.status,
@@ -327,7 +332,7 @@ impl PerpMarket {
         }
 
         let amm_low_inventory_and_profitable =
-            (self.amm.net_revenue_since_last_funding > 0 && amm_lp_allowed_to_jit_make);
+            self.amm.net_revenue_since_last_funding > 0 && amm_lp_allowed_to_jit_make;
         let amm_oracle_no_latency = self.amm.oracle_source == OracleSource::Prelaunch;
         let can_skip = amm_low_inventory_and_profitable || amm_oracle_no_latency;
 
@@ -1400,10 +1405,17 @@ impl AMM {
 
     pub fn can_lower_k(&self) -> DriftResult<bool> {
         let (max_bids, max_asks) = amm::calculate_market_open_bids_asks(self)?;
-        let can_lower = self.base_asset_amount_with_amm.unsigned_abs()
-            < max_bids.unsigned_abs().min(max_asks.unsigned_abs())
-            && self.base_asset_amount_with_amm.unsigned_abs()
-                < self.sqrt_k.safe_sub(self.user_lp_shares)?;
+        let min_order_size_u128 = self.min_order_size.cast::<u128>()?;
+
+        let can_lower = (self.base_asset_amount_with_amm.unsigned_abs()
+            < max_bids.unsigned_abs().min(max_asks.unsigned_abs()))
+            && (self
+                .base_asset_amount_with_amm
+                .unsigned_abs()
+                .max(min_order_size_u128)
+                < self.sqrt_k.safe_sub(self.user_lp_shares)?)
+            && (min_order_size_u128 < max_bids.unsigned_abs().max(max_asks.unsigned_abs()));
+
         Ok(can_lower)
     }
 
@@ -1414,10 +1426,14 @@ impl AMM {
     ) -> DriftResult<Option<i64>> {
         match self.oracle_source {
             OracleSource::Pyth | OracleSource::PythStableCoin => {
-                Ok(Some(self.get_pyth_twap(price_oracle, 1, false)?))
+                Ok(Some(self.get_pyth_twap(price_oracle, &OracleSource::Pyth)?))
             }
-            OracleSource::Pyth1K => Ok(Some(self.get_pyth_twap(price_oracle, 1000, false)?)),
-            OracleSource::Pyth1M => Ok(Some(self.get_pyth_twap(price_oracle, 1000000, false)?)),
+            OracleSource::Pyth1K => Ok(Some(
+                self.get_pyth_twap(price_oracle, &OracleSource::Pyth1K)?,
+            )),
+            OracleSource::Pyth1M => Ok(Some(
+                self.get_pyth_twap(price_oracle, &OracleSource::Pyth1M)?,
+            )),
             OracleSource::Switchboard => Ok(Some(get_switchboard_price(price_oracle, slot)?.price)),
             OracleSource::SwitchboardOnDemand => {
                 Ok(Some(get_sb_on_demand_price(price_oracle, slot)?.price))
@@ -1427,22 +1443,27 @@ impl AMM {
                 Err(ErrorCode::DefaultError)
             }
             OracleSource::Prelaunch => Ok(Some(get_prelaunch_price(price_oracle, slot)?.price)),
-            OracleSource::PythPull | OracleSource::PythStableCoinPull => {
-                Ok(Some(self.get_pyth_twap(price_oracle, 1, true)?))
-            }
-            OracleSource::Pyth1KPull => Ok(Some(self.get_pyth_twap(price_oracle, 1000, true)?)),
-            OracleSource::Pyth1MPull => {
-                Ok(Some(self.get_pyth_twap(price_oracle, 1000000, true)?))
-            }
+            OracleSource::PythPull | OracleSource::PythStableCoinPull => Ok(Some(
+                self.get_pyth_twap(price_oracle, &OracleSource::PythPull)?,
+            )),
+            OracleSource::Pyth1KPull => Ok(Some(
+                self.get_pyth_twap(price_oracle, &OracleSource::Pyth1KPull)?,
+            )),
+            OracleSource::Pyth1MPull => Ok(Some(
+                self.get_pyth_twap(price_oracle, &OracleSource::Pyth1MPull)?,
+            )),
+            OracleSource::PythLazer => Ok(Some(
+                self.get_pyth_twap(price_oracle, &OracleSource::PythLazer)?,
+            )),
         }
     }
 
     pub fn get_pyth_twap(
         &self,
         price_oracle: &AccountInfo,
-        multiple: u128,
-        is_pull_oracle: bool,
+        oracle_source: &OracleSource,
     ) -> DriftResult<i64> {
+        let multiple = oracle_source.get_pyth_multiple();
         let mut pyth_price_data: &[u8] = &price_oracle
             .try_borrow_data()
             .or(Err(ErrorCode::UnableToLoadOracle))?;
@@ -1451,7 +1472,7 @@ impl AMM {
         let oracle_twap: i64;
         let oracle_exponent: i32;
 
-        if is_pull_oracle {
+        if oracle_source.is_pyth_pull_oracle() {
             let price_message =
                 pyth_solana_receiver_sdk::price_update::PriceUpdateV2::try_deserialize(
                     &mut pyth_price_data,
@@ -1460,11 +1481,17 @@ impl AMM {
             oracle_price = price_message.price_message.price;
             oracle_twap = price_message.price_message.ema_price;
             oracle_exponent = price_message.price_message.exponent;
-        } else {
+        } else if oracle_source.is_pyth_push_oracle() {
             let price_data = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
             oracle_price = price_data.agg.price;
             oracle_twap = price_data.twap.val;
             oracle_exponent = price_data.expo;
+        } else {
+            let price_data = PythLazerOracle::try_deserialize(&mut pyth_price_data)
+                .or(Err(ErrorCode::UnableToLoadOracle))?;
+            oracle_price = price_data.price;
+            oracle_twap = price_data.price;
+            oracle_exponent = price_data.exponent;
         }
 
         assert!(oracle_twap > oracle_price / 10);

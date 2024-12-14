@@ -22,6 +22,7 @@ import {
 import {
 	Commitment,
 	Connection,
+	MemcmpFilter,
 	PublicKey,
 	RpcResponseAndContext,
 } from '@solana/web3.js';
@@ -74,6 +75,7 @@ export class UserMap implements UserMapInterface {
 	private connection: Connection;
 	private commitment: Commitment;
 	private includeIdle: boolean;
+	private additionalFilters?: MemcmpFilter[];
 	private disableSyncOnTotalAccountsChange: boolean;
 	private lastNumberOfSubAccounts: BN;
 	private subscription:
@@ -93,6 +95,8 @@ export class UserMap implements UserMapInterface {
 	private syncPromise?: Promise<void>;
 	private syncPromiseResolver: () => void;
 
+	private throwOnFailedSync: boolean;
+
 	/**
 	 * Constructs a new UserMap instance.
 	 */
@@ -110,6 +114,7 @@ export class UserMap implements UserMapInterface {
 				  this.driftClient.opts.commitment
 				: this.driftClient.opts.commitment;
 		this.includeIdle = config.includeIdle ?? false;
+		this.additionalFilters = config.additionalFilters;
 		this.disableSyncOnTotalAccountsChange =
 			config.disableSyncOnTotalAccountsChange ?? false;
 
@@ -157,6 +162,9 @@ export class UserMap implements UserMapInterface {
 		this.syncConfig = config.syncConfig ?? {
 			type: 'default',
 		};
+
+		// Whether to throw an error if the userMap fails to sync. Defaults to false.
+		this.throwOnFailedSync = config.throwOnFailedSync ?? false;
 	}
 
 	public async subscribe() {
@@ -390,7 +398,9 @@ export class UserMap implements UserMapInterface {
 			if (!this.includeIdle) {
 				filters.push(getNonIdleUserFilter());
 			}
-
+			if (this.additionalFilters) {
+				filters.push(...this.additionalFilters);
+			}
 			const rpcRequestArgs = [
 				this.driftClient.program.programId.toBase58(),
 				{
@@ -465,6 +475,9 @@ export class UserMap implements UserMapInterface {
 		} catch (err) {
 			const e = err as Error;
 			console.error(`Error in UserMap.sync(): ${e.message} ${e.stack ?? ''}`);
+			if (this.throwOnFailedSync) {
+				throw e;
+			}
 		} finally {
 			this.syncPromiseResolver();
 			this.syncPromise = undefined;
@@ -580,6 +593,9 @@ export class UserMap implements UserMapInterface {
 			}
 		} catch (err) {
 			console.error(`Error in UserMap.sync():`, err);
+			if (this.throwOnFailedSync) {
+				throw err;
+			}
 		} finally {
 			if (this.syncPromiseResolver) {
 				this.syncPromiseResolver();

@@ -319,6 +319,14 @@ pub mod drift {
         handle_update_user_margin_trading_enabled(ctx, _sub_account_id, margin_trading_enabled)
     }
 
+    pub fn update_user_pool_id<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, UpdateUser<'info>>,
+        _sub_account_id: u16,
+        pool_id: u8,
+    ) -> Result<()> {
+        handle_update_user_pool_id(ctx, _sub_account_id, pool_id)
+    }
+
     pub fn update_user_delegate(
         ctx: Context<UpdateUser>,
         _sub_account_id: u16,
@@ -343,10 +351,24 @@ pub mod drift {
         handle_update_user_advanced_lp(ctx, _sub_account_id, advanced_lp)
     }
 
+    pub fn update_user_protected_maker_orders(
+        ctx: Context<UpdateUserProtectedMakerMode>,
+        _sub_account_id: u16,
+        protected_maker_orders: bool,
+    ) -> Result<()> {
+        handle_update_user_protected_maker_orders(ctx, _sub_account_id, protected_maker_orders)
+    }
+
     pub fn delete_user<'c: 'info, 'info>(
         ctx: Context<'_, '_, 'c, 'info, DeleteUser>,
     ) -> Result<()> {
         handle_delete_user(ctx)
+    }
+
+    pub fn force_delete_user<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, ForceDeleteUser<'info>>,
+    ) -> Result<()> {
+        handle_force_delete_user(ctx)
     }
 
     pub fn delete_swift_user_orders<'c: 'info, 'info>(
@@ -406,6 +428,12 @@ pub mod drift {
         ctx: Context<'_, '_, 'c, 'info, UpdateUserIdle<'info>>,
     ) -> Result<()> {
         handle_update_user_idle(ctx)
+    }
+
+    pub fn log_user_balances<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, LogUserBalances<'info>>,
+    ) -> Result<()> {
+        handle_log_user_balances(ctx)
     }
 
     pub fn disable_user_high_leverage_mode<'c: 'info, 'info>(
@@ -621,6 +649,13 @@ pub mod drift {
         ctx: Context<UpdateUserGovTokenInsuranceStake>,
     ) -> Result<()> {
         handle_update_user_gov_token_insurance_stake(ctx)
+    }
+
+    pub fn update_user_gov_token_insurance_stake_devnet(
+        ctx: Context<UpdateUserGovTokenInsuranceStakeDevnet>,
+        gov_stake_amount: u64,
+    ) -> Result<()> {
+        handle_update_user_gov_token_insurance_stake_devnet(ctx, gov_stake_amount)
     }
 
     // IF stakers
@@ -996,6 +1031,13 @@ pub mod drift {
         insurance_fund_unstaking_period: i64,
     ) -> Result<()> {
         handle_update_insurance_fund_unstaking_period(ctx, insurance_fund_unstaking_period)
+    }
+
+    pub fn update_spot_market_pool_id(
+        ctx: Context<AdminUpdateSpotMarket>,
+        pool_id: u8,
+    ) -> Result<()> {
+        handle_update_spot_market_pool_id(ctx, pool_id)
     }
 
     pub fn update_spot_market_liquidation_fee(
@@ -1518,6 +1560,20 @@ pub mod drift {
         handle_initialize_pyth_pull_oracle(ctx, feed_id)
     }
 
+    pub fn initialize_pyth_lazer_oracle(
+        ctx: Context<InitPythLazerOracle>,
+        feed_id: u32,
+    ) -> Result<()> {
+        handle_initialize_pyth_lazer_oracle(ctx, feed_id)
+    }
+
+    pub fn post_pyth_lazer_oracle_update<'c: 'info, 'info>(
+        ctx: Context<'_, '_, 'c, 'info, UpdatePythLazerOracle>,
+        pyth_message: Vec<u8>,
+    ) -> Result<()> {
+        handle_update_pyth_lazer_oracle(ctx, pyth_message)
+    }
+
     pub fn initialize_high_leverage_mode_config(
         ctx: Context<InitializeHighLeverageModeConfig>,
         max_users: u32,
@@ -1531,6 +1587,21 @@ pub mod drift {
         reduce_only: bool,
     ) -> Result<()> {
         handle_update_high_leverage_mode_config(ctx, max_users, reduce_only)
+    }
+
+    pub fn initialize_protected_maker_mode_config(
+        ctx: Context<InitializeProtectedMakerModeConfig>,
+        max_users: u32,
+    ) -> Result<()> {
+        handle_initialize_protected_maker_mode_config(ctx, max_users)
+    }
+
+    pub fn update_protected_maker_mode_config(
+        ctx: Context<UpdateProtectedMakerModeConfig>,
+        max_users: u32,
+        reduce_only: bool,
+    ) -> Result<()> {
+        handle_update_protected_maker_mode_config(ctx, max_users, reduce_only)
     }
 }
 

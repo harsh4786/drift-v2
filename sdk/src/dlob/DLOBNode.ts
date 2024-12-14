@@ -19,6 +19,8 @@ export interface DLOBNode {
 	isBaseFilled(): boolean;
 	haveFilled: boolean;
 	userAccount: string | undefined;
+	isUserProtectedMaker: boolean;
+	isSwift: boolean | undefined;
 }
 
 export abstract class OrderNode implements DLOBNode {
@@ -27,12 +29,21 @@ export abstract class OrderNode implements DLOBNode {
 	sortValue: BN;
 	haveFilled = false;
 	haveTrigger = false;
+	isUserProtectedMaker: boolean;
+	isSwift: boolean;
 
-	constructor(order: Order, userAccount: string) {
+	constructor(
+		order: Order,
+		userAccount: string,
+		isUserProtectedMaker: boolean,
+		isSwift = false
+	) {
 		// Copy the order over to the node
 		this.order = { ...order };
 		this.userAccount = userAccount;
 		this.sortValue = this.getSortValue(order);
+		this.isUserProtectedMaker = isUserProtectedMaker;
+		this.isSwift = isSwift;
 	}
 
 	abstract getSortValue(order: Order): BN;
@@ -122,15 +133,31 @@ export class TriggerOrderNode extends OrderNode {
 	}
 }
 
+// We'll use the swift uuid for the order id since it's not yet on-chain
+export class SwiftOrderNode extends OrderNode {
+	next?: SwiftOrderNode;
+	previous?: SwiftOrderNode;
+
+	constructor(order: Order, userAccount: string) {
+		super(order, userAccount, true);
+	}
+
+	getSortValue(order: Order): BN {
+		return order.slot;
+	}
+}
+
 export type DLOBNodeMap = {
 	restingLimit: RestingLimitOrderNode;
 	takingLimit: TakingLimitOrderNode;
 	floatingLimit: FloatingLimitOrderNode;
 	market: MarketOrderNode;
 	trigger: TriggerOrderNode;
+	swift: SwiftOrderNode;
 };
 
 export type DLOBNodeType =
+	| 'swift'
 	| 'restingLimit'
 	| 'takingLimit'
 	| 'floatingLimit'
@@ -140,19 +167,30 @@ export type DLOBNodeType =
 export function createNode<T extends DLOBNodeType>(
 	nodeType: T,
 	order: Order,
-	userAccount: string
+	userAccount: string,
+	isUserProtectedMaker: boolean
 ): DLOBNodeMap[T] {
 	switch (nodeType) {
 		case 'floatingLimit':
-			return new FloatingLimitOrderNode(order, userAccount);
+			return new FloatingLimitOrderNode(
+				order,
+				userAccount,
+				isUserProtectedMaker
+			);
 		case 'restingLimit':
-			return new RestingLimitOrderNode(order, userAccount);
+			return new RestingLimitOrderNode(
+				order,
+				userAccount,
+				isUserProtectedMaker
+			);
 		case 'takingLimit':
-			return new TakingLimitOrderNode(order, userAccount);
+			return new TakingLimitOrderNode(order, userAccount, isUserProtectedMaker);
 		case 'market':
-			return new MarketOrderNode(order, userAccount);
+			return new MarketOrderNode(order, userAccount, isUserProtectedMaker);
 		case 'trigger':
-			return new TriggerOrderNode(order, userAccount);
+			return new TriggerOrderNode(order, userAccount, isUserProtectedMaker);
+		case 'swift':
+			return new SwiftOrderNode(order, userAccount);
 		default:
 			throw Error(`Unknown DLOBNode type ${nodeType}`);
 	}

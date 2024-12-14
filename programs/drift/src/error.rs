@@ -559,9 +559,9 @@ pub enum ErrorCode {
     OracleWrongVaaOwner,
     #[msg("Multi updates must have 2 or fewer accounts passed in remaining accounts")]
     OracleTooManyPriceAccountUpdates,
-    #[msg("Don't have the same remaining accounts number and merkle price updates left")]
+    #[msg("Don't have the same remaining accounts number and pyth updates left")]
     OracleMismatchedVaaAndPriceUpdates,
-    #[msg("Remaining account passed is not a valid pda")]
+    #[msg("Remaining account passed does not match oracle update derived pda")]
     OracleBadRemainingAccountPublicKey,
     #[msg("FailedOpenbookV2CPI")]
     FailedOpenbookV2CPI,
@@ -609,6 +609,18 @@ pub enum ErrorCode {
     SwiftOrderDoesNotExist,
     #[msg("Swift order id cannot be 0s")]
     InvalidSwiftOrderId,
+    #[msg("Invalid pool id")]
+    InvalidPoolId,
+    #[msg("Invalid Protected Maker Mode Config")]
+    InvalidProtectedMakerModeConfig,
+    #[msg("Invalid pyth lazer storage owner")]
+    InvalidPythLazerStorageOwner,
+    #[msg("Verification of pyth lazer message failed")]
+    UnverifiedPythLazerMessage,
+    #[msg("Invalid pyth lazer message")]
+    InvalidPythLazerMessage,
+    #[msg("Pyth lazer message does not correspond to correct fed id")]
+    PythLazerMessagePriceFeedMismatch,
 }
 
 #[macro_export]

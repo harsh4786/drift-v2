@@ -1,4 +1,4 @@
-import { Commitment, Connection } from '@solana/web3.js';
+import { Commitment, Connection, MemcmpFilter } from '@solana/web3.js';
 import { DriftClient } from '../driftClient';
 import { GrpcConfigs } from '../accounts/types';
 
@@ -55,4 +55,9 @@ export type UserMapConfig = {
 	disableSyncOnTotalAccountsChange?: boolean;
 
 	syncConfig?: SyncConfig;
+
+	// Whether to throw an error if the userMap fails to sync. Defaults to true.
+	throwOnFailedSync?: boolean;
+
+	additionalFilters?: MemcmpFilter[];
 };

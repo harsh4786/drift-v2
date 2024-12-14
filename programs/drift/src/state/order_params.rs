@@ -796,20 +796,24 @@ pub struct ModifyOrderParams {
     pub auction_duration: Option<u8>,
     pub auction_start_price: Option<i64>,
     pub auction_end_price: Option<i64>,
-    pub policy: Option<ModifyOrderPolicy>,
+    pub policy: Option<u8>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Eq, PartialEq)]
-pub enum ModifyOrderPolicy {
-    TryModify,
-    MustModify,
-}
+impl ModifyOrderParams {
+    pub fn must_modify(&self) -> bool {
+        self.policy.unwrap_or(0) & ModifyOrderPolicy::MustModify as u8 != 0
+    }
 
-impl Default for ModifyOrderPolicy {
-    fn default() -> Self {
-        Self::TryModify
+    pub fn exclude_previous_fill(&self) -> bool {
+        self.policy.unwrap_or(0) & ModifyOrderPolicy::ExcludePreviousFill as u8 != 0
     }
 }
+
+pub enum ModifyOrderPolicy {
+    MustModify = 1,
+    ExcludePreviousFill = 2,
+}
+
 #[derive(Clone)]
 pub struct PlaceOrderOptions {
     pub swift_taker_order_slot: Option<u64>,
@@ -871,4 +875,14 @@ impl PlaceOrderOptions {
 pub enum PlaceAndTakeOrderSuccessCondition {
     PartialFill = 1,
     FullFill = 2,
+}
+
+pub fn parse_optional_params(optional_params: Option<u32>) -> (u8, u8) {
+    match optional_params {
+        Some(optional_params) => (
+            (optional_params & 255) as u8,
+            ((optional_params >> 8) & 255) as u8,
+        ),
+        None => (0, 100),
+    }
 }
