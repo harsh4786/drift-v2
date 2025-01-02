@@ -559,9 +559,9 @@ pub enum ErrorCode {
     OracleWrongVaaOwner,
     #[msg("Multi updates must have 2 or fewer accounts passed in remaining accounts")]
     OracleTooManyPriceAccountUpdates,
-    #[msg("Don't have the same remaining accounts number and merkle price updates left")]
+    #[msg("Don't have the same remaining accounts number and pyth updates left")]
     OracleMismatchedVaaAndPriceUpdates,
-    #[msg("Remaining account passed is not a valid pda")]
+    #[msg("Remaining account passed does not match oracle update derived pda")]
     OracleBadRemainingAccountPublicKey,
     #[msg("FailedOpenbookV2CPI")]
     FailedOpenbookV2CPI,
@@ -581,7 +581,7 @@ pub enum ErrorCode {
     SigVerificationFailed,
     #[msg("Market index mismatched b/w taker and maker swift order params")]
     MismatchedSwiftOrderParamsMarketIndex,
-    #[msg("Swift only available for market/oracle perp orders")]
+    #[msg("Invalid swift order param")]
     InvalidSwiftOrderParam,
     #[msg("Place and take order success condition failed")]
     PlaceAndTakeOrderSuccessConditionFailed,
@@ -611,6 +611,16 @@ pub enum ErrorCode {
     InvalidSwiftOrderId,
     #[msg("Invalid pool id")]
     InvalidPoolId,
+    #[msg("Invalid Protected Maker Mode Config")]
+    InvalidProtectedMakerModeConfig,
+    #[msg("Invalid pyth lazer storage owner")]
+    InvalidPythLazerStorageOwner,
+    #[msg("Verification of pyth lazer message failed")]
+    UnverifiedPythLazerMessage,
+    #[msg("Invalid pyth lazer message")]
+    InvalidPythLazerMessage,
+    #[msg("Pyth lazer message does not correspond to correct fed id")]
+    PythLazerMessagePriceFeedMismatch,
 }
 
 #[macro_export]

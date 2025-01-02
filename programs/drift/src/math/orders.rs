@@ -825,11 +825,11 @@ pub fn calculate_max_perp_order_size(
 
     let perp_market = perp_market_map.get_ref(&market_index)?;
 
-    let oracle_price_data_price = oracle_map.get_price_data(&perp_market.amm.oracle)?.price;
+    let oracle_price_data_price = oracle_map.get_price_data(&perp_market.oracle_id())?.price;
 
     let quote_spot_market = spot_market_map.get_ref(&perp_market.quote_spot_market_index)?;
     let quote_oracle_price = oracle_map
-        .get_price_data(&quote_spot_market.oracle)?
+        .get_price_data(&quote_spot_market.oracle_id())?
         .price
         .max(
             quote_spot_market
@@ -971,7 +971,7 @@ pub fn calculate_max_spot_order_size(
 
     let spot_market = spot_market_map.get_ref(&market_index)?;
 
-    let oracle_price_data = oracle_map.get_price_data(&spot_market.oracle)?;
+    let oracle_price_data = oracle_map.get_price_data(&spot_market.oracle_id())?;
     let twap = spot_market
         .historical_oracle_data
         .last_oracle_price_twap_5min;
@@ -1130,12 +1130,17 @@ pub fn calculate_max_spot_order_size(
         user_custom_asset_weight,
     )?;
 
-    let precision_increase = 10i128.pow(spot_market.decimals - 6);
+    let (numerator_scale, denominator_scale) = if spot_market.decimals > 6 {
+        (10_i128.pow(spot_market.decimals - 6), 1)
+    } else {
+        (1, 10_i128.pow(6 - spot_market.decimals))
+    };
 
     let calculate_order_size_and_free_collateral_delta = |free_collateral_delta: u32| {
         let new_order_size = free_collateral
             .safe_sub(OPEN_ORDER_MARGIN_REQUIREMENT.cast()?)?
-            .safe_mul(precision_increase)?
+            .safe_mul(numerator_scale)?
+            .safe_div(denominator_scale)?
             .safe_mul(SPOT_WEIGHT_PRECISION.cast()?)?
             .safe_div(free_collateral_delta.cast()?)?
             .safe_mul(PRICE_PRECISION_I128)?

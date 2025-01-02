@@ -67,6 +67,7 @@ export enum UserStatus {
 	BANKRUPT = 2,
 	REDUCE_ONLY = 4,
 	ADVANCED_LP = 8,
+	PROTECTED_MAKER = 16,
 }
 
 export class MarginMode {
@@ -130,6 +131,23 @@ export class OracleSource {
 	static readonly PYTH_STABLE_COIN_PULL = { pythStableCoinPull: {} };
 	static readonly Prelaunch = { prelaunch: {} };
 	static readonly SWITCHBOARD_ON_DEMAND = { switchboardOnDemand: {} };
+	static readonly PYTH_LAZER = { pythLazer: {} };
+}
+
+export class OracleSourceNum {
+	static readonly PYTH = 0;
+	static readonly PYTH_1K = 1;
+	static readonly PYTH_1M = 2;
+	static readonly PYTH_PULL = 3;
+	static readonly PYTH_1K_PULL = 4;
+	static readonly PYTH_1M_PULL = 5;
+	static readonly SWITCHBOARD = 6;
+	static readonly QUOTE_ASSET = 7;
+	static readonly PYTH_STABLE_COIN = 8;
+	static readonly PYTH_STABLE_COIN_PULL = 9;
+	static readonly PRELAUNCH = 10;
+	static readonly SWITCHBOARD_ON_DEMAND = 11;
+	static readonly PYTH_LAZER = 12;
 }
 
 export class OrderType {
@@ -980,6 +998,7 @@ export type UserAccount = {
 	hasOpenAuction: boolean;
 	lastFuelBonusUpdateTs: number;
 	marginMode: MarginMode;
+	poolId: number;
 };
 
 export type SpotPosition = {
@@ -1061,9 +1080,9 @@ export type ModifyOrderParams = {
 	[Property in keyof OrderParams]?: OrderParams[Property] | null;
 } & { policy?: ModifyOrderPolicy };
 
-export class ModifyOrderPolicy {
-	static readonly MUST_MODIFY = { mustModify: {} };
-	static readonly TRY_MODIFY = { tryModify: {} };
+export enum ModifyOrderPolicy {
+	MustModify = 1,
+	ExcludePreviousFill = 2,
 }
 
 export const DefaultOrderParams: OrderParams = {
@@ -1086,15 +1105,11 @@ export const DefaultOrderParams: OrderParams = {
 	auctionEndPrice: null,
 };
 
-export type SwiftServerMessage = {
-	slot: BN;
-	swiftOrderSignature: Uint8Array;
-	uuid: Uint8Array; // From buffer of standard UUID string
-};
-
 export type SwiftOrderParamsMessage = {
 	swiftOrderParams: OptionalOrderParams;
 	subAccountId: number;
+	slot: BN;
+	uuid: Uint8Array;
 	takeProfitOrderParams: SwiftTriggerOrderParams | null;
 	stopLossOrderParams: SwiftTriggerOrderParams | null;
 };

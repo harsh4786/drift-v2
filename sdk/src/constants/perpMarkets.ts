@@ -12,6 +12,7 @@ export type PerpMarketConfig = {
 	oracle: PublicKey;
 	oracleSource: OracleSource;
 	pythFeedId?: string;
+	pythLazerId?: number;
 };
 
 export const DevnetPerpMarkets: PerpMarketConfig[] = [
@@ -21,11 +22,12 @@ export const DevnetPerpMarkets: PerpMarketConfig[] = [
 		symbol: 'SOL-PERP',
 		baseAssetSymbol: 'SOL',
 		marketIndex: 0,
-		oracle: new PublicKey('BAtFj4kQttZRVep3UZS2aZRDixkGYgWsbqTBVDbnSsPF'),
+		oracle: new PublicKey('3m6i4RFWEDw2Ft4tFHPJtYgmpPe21k56M3FHeWYrgGBz'),
 		launchTs: 1655751353000,
-		oracleSource: OracleSource.PYTH_PULL,
+		oracleSource: OracleSource.PYTH_LAZER,
 		pythFeedId:
 			'0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
+		pythLazerId: 6,
 	},
 	{
 		fullName: 'Bitcoin',
@@ -33,11 +35,12 @@ export const DevnetPerpMarkets: PerpMarketConfig[] = [
 		symbol: 'BTC-PERP',
 		baseAssetSymbol: 'BTC',
 		marketIndex: 1,
-		oracle: new PublicKey('486kr3pmFPfTsS4aZgcsQ7kS4i9rjMsYYZup6HQNSTT4'),
+		oracle: new PublicKey('35MbvS1Juz2wf7GsyHrkCw8yfKciRLxVpEhfZDZFrB4R'),
 		launchTs: 1655751353000,
-		oracleSource: OracleSource.PYTH_PULL,
+		oracleSource: OracleSource.PYTH_LAZER,
 		pythFeedId:
 			'0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43',
+		pythLazerId: 1,
 	},
 	{
 		fullName: 'Ethereum',
@@ -45,11 +48,12 @@ export const DevnetPerpMarkets: PerpMarketConfig[] = [
 		symbol: 'ETH-PERP',
 		baseAssetSymbol: 'ETH',
 		marketIndex: 2,
-		oracle: new PublicKey('6bEp2MiyoiiiDxcVqE8rUHQWwHirXUXtKfAEATTVqNzT'),
+		oracle: new PublicKey('93FG52TzNKCnMiasV14Ba34BYcHDb9p4zK4GjZnLwqWR'),
 		launchTs: 1637691133472,
-		oracleSource: OracleSource.PYTH_PULL,
+		oracleSource: OracleSource.PYTH_LAZER,
 		pythFeedId:
 			'0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace',
+		pythLazerId: 2,
 	},
 	{
 		fullName: 'Aptos',
@@ -78,8 +82,8 @@ export const DevnetPerpMarkets: PerpMarketConfig[] = [
 	{
 		fullName: 'Polygon',
 		category: ['L2', 'Infra'],
-		symbol: 'MATIC-PERP',
-		baseAssetSymbol: 'MATIC',
+		symbol: 'POL-PERP',
+		baseAssetSymbol: 'POL',
 		marketIndex: 5,
 		oracle: new PublicKey('BrzyDgwELy4jjjsqLQpBeUxzrsueYyMhuWpYBaUYcXvi'),
 		launchTs: 1677690149000, //todo
@@ -423,8 +427,8 @@ export const MainnetPerpMarkets: PerpMarketConfig[] = [
 	{
 		fullName: 'Polygon',
 		category: ['L2', 'Infra'],
-		symbol: 'MATIC-PERP',
-		baseAssetSymbol: 'MATIC',
+		symbol: 'POL-PERP',
+		baseAssetSymbol: 'POL',
 		marketIndex: 5,
 		oracle: new PublicKey('BrzyDgwELy4jjjsqLQpBeUxzrsueYyMhuWpYBaUYcXvi'),
 		launchTs: 1677690149000, //todo
@@ -1007,6 +1011,86 @@ export const MainnetPerpMarkets: PerpMarketConfig[] = [
 		oracleSource: OracleSource.PYTH_PULL,
 		pythFeedId:
 			'0x116da895807f81f6b5c5f01b109376e7f6834dc8b51365ab7cdfa66634340e54',
+	},
+	{
+		fullName: 'RAY',
+		category: ['DEX'],
+		symbol: 'RAY-PERP',
+		baseAssetSymbol: 'RAY',
+		marketIndex: 56,
+		oracle: new PublicKey('DPvPBacXhEyA1VXF4E3EYH3h83Bynh5uP3JLeN25TWzm'),
+		launchTs: 1732721897000,
+		oracleSource: OracleSource.PYTH_PULL,
+		pythFeedId:
+			'0x91568baa8beb53db23eb3fb7f22c6e8bd303d103919e19733f2bb642d3e7987a',
+	},
+	{
+		fullName: 'SUPERBOWL-LIX-LIONS',
+		category: ['Prediction', 'Sport'],
+		symbol: 'SUPERBOWL-LIX-LIONS-BET',
+		baseAssetSymbol: 'SUPERBOWL-LIX-LIONS',
+		marketIndex: 57,
+		oracle: new PublicKey('GfTeKKnBxeLSB1Hm24ArjduQM4yqaAgoGgiC99gq5E2P'),
+		launchTs: 1732721897000,
+		oracleSource: OracleSource.Prelaunch,
+	},
+	{
+		fullName: 'SUPERBOWL-LIX-CHIEFS',
+		category: ['Prediction', 'Sport'],
+		symbol: 'SUPERBOWL-LIX-CHIEFS-BET',
+		baseAssetSymbol: 'SUPERBOWL-LIX-CHIEFS',
+		marketIndex: 58,
+		oracle: new PublicKey('EdB17Nyu4bnEBiSEfFrwvp4VCUvtq9eDJHc6Ujys3Jwd'),
+		launchTs: 1732721897000,
+		oracleSource: OracleSource.Prelaunch,
+	},
+	{
+		fullName: 'Hyperliquid',
+		category: ['DEX'],
+		symbol: 'HYPE-PERP',
+		baseAssetSymbol: 'HYPE',
+		marketIndex: 59,
+		oracle: new PublicKey('Hn9JHQHKSvtnZ2xTWCgRGVNmav2TPffH7T72T6WoJ1cw'),
+		launchTs: 1733374800000,
+		oracleSource: OracleSource.PYTH_PULL,
+		pythFeedId:
+			'0x4279e31cc369bbcc2faf022b382b080e32a8e689ff20fbc530d2a603eb6cd98b',
+	},
+	{
+		fullName: 'LiteCoin',
+		category: ['Payment'],
+		symbol: 'LTC-PERP',
+		baseAssetSymbol: 'LTC',
+		marketIndex: 60,
+		oracle: new PublicKey('AmjHowvVkVJApCPUiwV9CdHVFn29LiBYZQqtZQ3xMqdg'),
+		launchTs: 1733374800000,
+		oracleSource: OracleSource.PYTH_PULL,
+		pythFeedId:
+			'0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54',
+	},
+	{
+		fullName: 'Magic Eden',
+		category: ['DEX'],
+		symbol: 'ME-PERP',
+		baseAssetSymbol: 'ME',
+		marketIndex: 61,
+		oracle: new PublicKey('FLQjrmEPGwbCKRYZ1eYM5FPccHBrCv2cN4GBu3mWfmPH'),
+		launchTs: 1733839936000,
+		oracleSource: OracleSource.PYTH_PULL,
+		pythFeedId:
+			'0x91519e3e48571e1232a85a938e714da19fe5ce05107f3eebb8a870b2e8020169',
+	},
+	{
+		fullName: 'PENGU',
+		category: ['Meme'],
+		symbol: 'PENGU-PERP',
+		baseAssetSymbol: 'PENGU',
+		marketIndex: 62,
+		oracle: new PublicKey('7vGHChuBJyFMYBqMLXRzBmRxWdSuwEmg8RvRm3RWQsxi'),
+		launchTs: 1734444000000,
+		oracleSource: OracleSource.PYTH_PULL,
+		pythFeedId:
+			'0xbed3097008b9b5e3c93bec20be79cb43986b85a996475589351a21e67bae9b61',
 	},
 ];
 

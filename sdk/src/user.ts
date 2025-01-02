@@ -36,8 +36,6 @@ import {
 	QUOTE_PRECISION_EXP,
 	QUOTE_SPOT_MARKET_INDEX,
 	SPOT_MARKET_WEIGHT_PRECISION,
-	GOV_SPOT_MARKET_INDEX,
-	TEN,
 	TEN_THOUSAND,
 	TWO,
 	ZERO,
@@ -98,11 +96,7 @@ import { calculateLiveOracleTwap } from './math/oracles';
 import { getPerpMarketTierNumber, getSpotMarketTierNumber } from './math/tiers';
 import { StrictOraclePrice } from './oracles/strictOraclePrice';
 
-import {
-	calculateSpotFuelBonus,
-	calculatePerpFuelBonus,
-	calculateInsuranceFuelBonus,
-} from './math/fuel';
+import { calculateSpotFuelBonus, calculatePerpFuelBonus } from './math/fuel';
 import { grpcUserAccountSubscriber } from './accounts/grpcUserAccountSubscriber';
 
 export class User {
@@ -931,21 +925,24 @@ export class User {
 			positionFuel: ZERO,
 		};
 
+		const userStats = this.driftClient.getUserStats();
+		const userStatsAccount: UserStatsAccount = userStats.getAccount();
+
 		if (includeSettled) {
-			const userStats: UserStatsAccount = this.driftClient
-				.getUserStats()
-				.getAccount();
-			result.insuranceFuel = result.insuranceFuel.add(
-				new BN(userStats.fuelInsurance)
+			result.takerFuel = result.takerFuel.add(
+				new BN(userStatsAccount.fuelTaker)
 			);
-			result.takerFuel = result.takerFuel.add(new BN(userStats.fuelTaker));
-			result.makerFuel = result.makerFuel.add(new BN(userStats.fuelMaker));
+			result.makerFuel = result.makerFuel.add(
+				new BN(userStatsAccount.fuelMaker)
+			);
 			result.depositFuel = result.depositFuel.add(
-				new BN(userStats.fuelDeposits)
+				new BN(userStatsAccount.fuelDeposits)
 			);
-			result.borrowFuel = result.borrowFuel.add(new BN(userStats.fuelBorrows));
+			result.borrowFuel = result.borrowFuel.add(
+				new BN(userStatsAccount.fuelBorrows)
+			);
 			result.positionFuel = result.positionFuel.add(
-				new BN(userStats.fuelPositions)
+				new BN(userStatsAccount.fuelPositions)
 			);
 		}
 
@@ -1027,52 +1024,13 @@ export class User {
 					);
 				}
 			}
-
-			const userStats: UserStatsAccount = this.driftClient
-				.getUserStats()
-				.getAccount();
-
-			// todo: get real time ifStakedGovTokenAmount using ifStakeAccount
-			if (userStats.ifStakedGovTokenAmount.gt(ZERO)) {
-				const spotMarketAccount: SpotMarketAccount =
-					this.driftClient.getSpotMarketAccount(GOV_SPOT_MARKET_INDEX);
-
-				const fuelBonusNumeratorUserStats = BN.max(
-					now.sub(
-						BN.max(new BN(userStats.lastFuelIfBonusUpdateTs), FUEL_START_TS)
-					),
-					ZERO
-				);
-
-				result.insuranceFuel = result.insuranceFuel.add(
-					calculateInsuranceFuelBonus(
-						spotMarketAccount,
-						userStats.ifStakedGovTokenAmount,
-						fuelBonusNumeratorUserStats
-					)
-				);
-			}
-
-			if (userStats.ifStakedQuoteAssetAmount.gt(ZERO)) {
-				const spotMarketAccount: SpotMarketAccount =
-					this.driftClient.getSpotMarketAccount(QUOTE_SPOT_MARKET_INDEX);
-
-				const fuelBonusNumeratorUserStats = BN.max(
-					now.sub(
-						BN.max(new BN(userStats.lastFuelIfBonusUpdateTs), FUEL_START_TS)
-					),
-					ZERO
-				);
-
-				result.insuranceFuel = result.insuranceFuel.add(
-					calculateInsuranceFuelBonus(
-						spotMarketAccount,
-						userStats.ifStakedQuoteAssetAmount,
-						fuelBonusNumeratorUserStats
-					)
-				);
-			}
 		}
+
+		result.insuranceFuel = userStats.getInsuranceFuelBonus(
+			now,
+			includeSettled,
+			includeUnsettled
+		);
 
 		return result;
 	}
@@ -3581,7 +3539,16 @@ export class User {
 		const freeCollateral = this.getFreeCollateral();
 		const initialMarginRequirement = this.getInitialMarginRequirement();
 		const oracleData = this.getOracleDataForSpotMarket(marketIndex);
-		const precisionIncrease = TEN.pow(new BN(spotMarket.decimals - 6));
+		const { numeratorScale, denominatorScale } =
+			spotMarket.decimals > 6
+				? {
+						numeratorScale: new BN(10).pow(new BN(spotMarket.decimals - 6)),
+						denominatorScale: new BN(1),
+				  }
+				: {
+						numeratorScale: new BN(1),
+						denominatorScale: new BN(10).pow(new BN(6 - spotMarket.decimals)),
+				  };
 
 		const { canBypass, depositAmount: userDepositAmount } =
 			this.canBypassWithdrawLimits(marketIndex);
@@ -3607,7 +3574,9 @@ export class User {
 					PRICE_PRECISION
 				),
 				oracleData.price
-			).mul(precisionIncrease);
+			)
+				.mul(numeratorScale)
+				.div(denominatorScale);
 		}
 
 		const maxWithdrawValue = BN.min(
@@ -3633,7 +3602,8 @@ export class User {
 				.div(new BN(spotMarket.initialLiabilityWeight))
 				.mul(PRICE_PRECISION)
 				.div(oracleData.price)
-				.mul(precisionIncrease);
+				.mul(numeratorScale)
+				.div(denominatorScale);
 
 			const maxBorrowValue = BN.min(
 				maxWithdrawValue.add(maxLiabilityAllowed),

@@ -5,6 +5,7 @@ import { startAnchor } from 'solana-bankrun';
 import {
 	BN,
 	ExchangeStatus,
+	getPythLazerOraclePublicKey,
 	OracleGuardRails,
 	OracleSource,
 	TestClient,
@@ -18,7 +19,10 @@ import {
 	mockUSDCMint,
 } from './testHelpers';
 import { PublicKey } from '@solana/web3.js';
-import { BankrunContextWrapper } from '../sdk/src/bankrun/bankrunConnection';
+import {
+	BankrunContextWrapper,
+	Connection,
+} from '../sdk/src/bankrun/bankrunConnection';
 import { TestBulkAccountLoader } from '../sdk/src/accounts/testBulkAccountLoader';
 
 describe('admin', () => {
@@ -384,6 +388,19 @@ describe('admin', () => {
 		console.log('unpaused deposits and withdraws!');
 	});
 
+	it('Init pyth lazer', async () => {
+		await driftClient.fetchAccounts();
+		const tx = await driftClient.initializePythLazerOracle(0);
+		console.log(tx);
+
+		assert(
+			await checkIfAccountExists(
+				driftClient.connection,
+				getPythLazerOraclePublicKey(driftClient.program.programId, 0)
+			)
+		);
+	});
+
 	it('Update admin', async () => {
 		const newAdminKey = PublicKey.default;
 
@@ -402,3 +419,16 @@ describe('admin', () => {
 		await driftClient.unsubscribe();
 	});
 });
+
+async function checkIfAccountExists(
+	connection: Connection,
+	account: PublicKey
+): Promise<boolean> {
+	try {
+		const accountInfo = await connection.getAccountInfo(account);
+		return accountInfo != null;
+	} catch (e) {
+		// Doesn't already exist
+		return false;
+	}
+}

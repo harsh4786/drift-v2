@@ -44,6 +44,7 @@ test_files=(
   multipleMakerOrders.ts
   multipleSpotMakerOrders.ts
   openbookTest.ts
+  oracleDiffSources.ts
   oracleFillPriceGuardrails.ts
   oracleOffsetOrders.ts
   order.ts
@@ -59,6 +60,7 @@ test_files=(
   prelisting.ts
   pyth.ts
   pythPull.ts
+  pythLazerBankrun.ts
   referrer.ts
   rfq.ts
   roundInFavorBaseAsset.ts
