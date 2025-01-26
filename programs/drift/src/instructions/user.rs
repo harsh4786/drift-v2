@@ -19,7 +19,8 @@ use crate::controller::spot_position::{
 };
 use crate::error::ErrorCode;
 use crate::ids::{
-    jupiter_mainnet_3, jupiter_mainnet_4, jupiter_mainnet_6, marinade_mainnet, serum_program,
+    jupiter_mainnet_3, jupiter_mainnet_4, jupiter_mainnet_6, lighthouse, marinade_mainnet,
+    serum_program,
 };
 use crate::instructions::constraints::*;
 use crate::instructions::optional_accounts::{
@@ -31,8 +32,7 @@ use crate::math::liquidation::is_user_being_liquidated;
 use crate::math::margin::meets_initial_margin_requirement;
 use crate::math::margin::{
     calculate_max_withdrawable_amount, meets_maintenance_margin_requirement,
-    meets_place_order_margin_requirement, meets_withdraw_margin_requirement,
-    validate_spot_margin_trading, MarginRequirementType,
+    meets_place_order_margin_requirement, validate_spot_margin_trading, MarginRequirementType,
 };
 use crate::math::safe_math::SafeMath;
 use crate::math::spot_balance::get_token_value;
@@ -298,7 +298,7 @@ pub fn handle_initialize_swift_user_orders<'c: 'info, 'info>(
     }
 
     let swift_user_orders = &mut ctx.accounts.swift_user_orders;
-    swift_user_orders.user_pubkey = ctx.accounts.user.key();
+    swift_user_orders.authority_pubkey = ctx.accounts.authority.key();
     swift_user_orders
         .swift_order_data
         .resize_with(num_orders as usize, SwiftOrderId::default);
@@ -2684,6 +2684,10 @@ pub fn handle_begin_swap<'c: 'info, 'info>(
             }
         } else {
             if found_end {
+                if ix.program_id == lighthouse::ID {
+                    continue;
+                }
+
                 for meta in ix.accounts.iter() {
                     validate!(
                         meta.is_writable == false,
@@ -3057,12 +3061,17 @@ pub fn handle_end_swap<'c: 'info, 'info>(
     drop(out_spot_market);
     drop(in_spot_market);
 
-    meets_withdraw_margin_requirement(
-        &user,
+    user.meets_withdraw_margin_requirement_and_increment_fuel_bonus_swap(
         &perp_market_map,
         &spot_market_map,
         &mut oracle_map,
         margin_type,
+        in_market_index,
+        in_token_amount_before.safe_sub(in_token_amount_after)?,
+        out_market_index,
+        out_token_amount_before.safe_sub(out_token_amount_after)?,
+        &mut user_stats,
+        now,
     )?;
 
     user.update_last_active_slot(slot);
@@ -3186,17 +3195,13 @@ pub struct InitializeRFQUser<'info> {
 pub struct InitializeSwiftUserOrders<'info> {
     #[account(
         init,
-        seeds = [SWIFT_PDA_SEED.as_ref(), user.key().as_ref()],
+        seeds = [SWIFT_PDA_SEED.as_ref(), authority.key().as_ref()],
         space = SwiftUserOrders::space(num_orders as usize),
         bump,
         payer = payer
     )]
     pub swift_user_orders: Box<Account<'info, SwiftUserOrders>>,
     pub authority: Signer<'info>,
-    #[account(
-        constraint = can_sign_for_user(&user, &authority)?
-    )]
-    pub user: AccountLoader<'info, User>,
     #[account(mut)]
     pub payer: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
@@ -3208,7 +3213,7 @@ pub struct InitializeSwiftUserOrders<'info> {
 pub struct ResizeSwiftUserOrders<'info> {
     #[account(
         mut,
-        seeds = [SWIFT_PDA_SEED.as_ref(), user.key().as_ref()],
+        seeds = [SWIFT_PDA_SEED.as_ref(), authority.key().as_ref()],
         bump,
         realloc = SwiftUserOrders::space(num_orders as usize),
         realloc::payer = authority,
@@ -3217,10 +3222,6 @@ pub struct ResizeSwiftUserOrders<'info> {
     pub swift_user_orders: Box<Account<'info, SwiftUserOrders>>,
     #[account(mut)]
     pub authority: Signer<'info>,
-    #[account(
-        constraint = can_sign_for_user(&user, &authority)?
-    )]
-    pub user: AccountLoader<'info, User>,
     pub system_program: Program<'info, System>,
 }
 
@@ -3449,7 +3450,7 @@ pub struct PlaceAndMakeSwift<'info> {
     )]
     pub taker_stats: AccountLoader<'info, UserStats>,
     #[account(
-        seeds = [SWIFT_PDA_SEED.as_ref(), taker.key().as_ref()],
+        seeds = [SWIFT_PDA_SEED.as_ref(), taker.load()?.authority.as_ref()],
         bump,
     )]
     /// CHECK: checked in SwiftUserOrdersZeroCopy checks
@@ -3531,13 +3532,8 @@ pub struct DeleteUser<'info> {
 pub struct DeleteSwiftUserOrders<'info> {
     #[account(
         mut,
-        has_one = authority,
-    )]
-    pub user: AccountLoader<'info, User>,
-    #[account(
-        mut,
-        close = user,
-        seeds = [SWIFT_PDA_SEED.as_ref(), user.key().as_ref()],
+        close = authority,
+        seeds = [SWIFT_PDA_SEED.as_ref(), authority.key().as_ref()],
         bump,
     )]
     pub swift_user_orders: Box<Account<'info, SwiftUserOrders>>,

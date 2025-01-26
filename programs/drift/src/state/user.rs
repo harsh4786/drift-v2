@@ -9,7 +9,9 @@ use crate::math::constants::{
 };
 use crate::math::lp::{calculate_lp_open_bids_asks, calculate_settle_lp_metrics};
 use crate::math::margin::MarginRequirementType;
-use crate::math::orders::{standardize_base_asset_amount, standardize_price};
+use crate::math::orders::{
+    apply_protected_maker_limit_price_offset, standardize_base_asset_amount, standardize_price,
+};
 use crate::math::position::{
     calculate_base_asset_value_and_pnl_with_oracle_price,
     calculate_base_asset_value_with_oracle_price, calculate_perp_liability_value,
@@ -495,6 +497,62 @@ impl User {
         )?;
 
         Ok(margin_calculation)
+    }
+    pub fn meets_withdraw_margin_requirement_and_increment_fuel_bonus_swap(
+        &mut self,
+        perp_market_map: &PerpMarketMap,
+        spot_market_map: &SpotMarketMap,
+        oracle_map: &mut OracleMap,
+        margin_requirement_type: MarginRequirementType,
+        in_market_index: u16,
+        in_delta: i128,
+        out_market_index: u16,
+        out_delta: i128,
+        user_stats: &mut UserStats,
+        now: i64,
+    ) -> DriftResult<bool> {
+        let strict = margin_requirement_type == MarginRequirementType::Initial;
+        let context = MarginContext::standard(margin_requirement_type)
+            .strict(strict)
+            .ignore_invalid_deposit_oracles(true)
+            .fuel_spot_deltas([(in_market_index, in_delta), (out_market_index, out_delta)])
+            .fuel_numerator(self, now);
+
+        let calculation = calculate_margin_requirement_and_total_collateral_and_liability_info(
+            self,
+            perp_market_map,
+            spot_market_map,
+            oracle_map,
+            context,
+        )?;
+
+        if calculation.margin_requirement > 0 || calculation.get_num_of_liabilities()? > 0 {
+            validate!(
+                calculation.all_liability_oracles_valid,
+                ErrorCode::InvalidOracle,
+                "User attempting to withdraw with outstanding liabilities when an oracle is invalid"
+            )?;
+        }
+
+        validate_any_isolated_tier_requirements(self, calculation)?;
+
+        validate!(
+            calculation.meets_margin_requirement(),
+            ErrorCode::InsufficientCollateral,
+            "User attempting to withdraw where total_collateral {} is below initial_margin_requirement {}",
+            calculation.total_collateral,
+            calculation.margin_requirement
+        )?;
+
+        user_stats.update_fuel_bonus(
+            self,
+            calculation.fuel_deposits,
+            calculation.fuel_borrows,
+            calculation.fuel_positions,
+            now,
+        )?;
+
+        Ok(true)
     }
 
     pub fn meets_withdraw_margin_requirement_and_increment_fuel_bonus(
@@ -1311,6 +1369,7 @@ impl Order {
         slot: u64,
         tick_size: u64,
         is_prediction_market: bool,
+        apply_protected_maker_offset: bool,
     ) -> DriftResult<Option<u64>> {
         let price = if self.has_auction_price(self.slot, self.auction_duration, slot)? {
             Some(calculate_auction_price(
@@ -1335,6 +1394,15 @@ impl Order {
                 limit_price = limit_price.min(MAX_PREDICTION_MARKET_PRICE)
             }
 
+            if apply_protected_maker_offset {
+                limit_price = apply_protected_maker_limit_price_offset(
+                    limit_price,
+                    tick_size,
+                    self.direction,
+                    false,
+                )?;
+            }
+
             Some(standardize_price(limit_price, tick_size, self.direction)?)
         } else if self.price == 0 {
             match fallback_price {
@@ -1342,7 +1410,18 @@ impl Order {
                 None => None,
             }
         } else {
-            Some(self.price)
+            let mut price = self.price;
+
+            if apply_protected_maker_offset {
+                price = apply_protected_maker_limit_price_offset(
+                    price,
+                    tick_size,
+                    self.direction,
+                    true,
+                )?;
+            }
+
+            Some(price)
         };
 
         Ok(price)
@@ -1357,6 +1436,7 @@ impl Order {
         slot: u64,
         tick_size: u64,
         is_prediction_market: bool,
+        apply_protected_maker_offset: bool,
     ) -> DriftResult<u64> {
         match self.get_limit_price(
             valid_oracle_price,
@@ -1364,6 +1444,7 @@ impl Order {
             slot,
             tick_size,
             is_prediction_market,
+            apply_protected_maker_offset,
         )? {
             Some(price) => Ok(price),
             None => {
