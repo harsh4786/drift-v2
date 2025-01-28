@@ -2769,12 +2769,12 @@ export class DriftClient {
 			await this.isSwiftUserOrdersAccountInitialized(this.wallet.publicKey);
 
 		if (!isSwiftUserOrdersAccountInitialized) {
-			ixs.push(
+			const [, initializeSwiftUserOrdersAccountIx] =
 				await this.getInitializeSwiftUserOrdersAccountIx(
 					this.wallet.publicKey,
 					8
-				)
-			);
+				);
+			ixs.push(initializeSwiftUserOrdersAccountIx);
 		}
 
 		const spotMarket = this.getSpotMarketAccount(marketIndex);
