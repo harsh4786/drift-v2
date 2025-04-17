@@ -5110,10 +5110,6 @@ export class DriftClient {
 	}): Promise<TransactionSignature> {
 		const quoteToUse = quote ?? v6?.quote;
 
-		if (!quoteToUse) {
-			throw new Error('No quote provided');
-		}
-
 		const res = await this.getJupiterSwapIxV6({
 			jupiterClient,
 			outMarketIndex,
@@ -5123,7 +5119,7 @@ export class DriftClient {
 			amount,
 			slippageBps,
 			swapMode,
-			quote: v6.quote,
+			quote: quoteToUse,
 			reduceOnly,
 			onlyDirectRoutes,
 		});
