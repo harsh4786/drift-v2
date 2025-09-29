@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "drift"
-version = "2.139.0"
+version = "2.140.0"
 dependencies = [
  "ahash 0.8.11",
  "anchor-lang",
