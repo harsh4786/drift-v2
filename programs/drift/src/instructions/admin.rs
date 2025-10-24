@@ -420,13 +420,13 @@ pub fn handle_initialize_serum_fulfillment_config(
     let market_state = serum_context.load_serum_market()?;
 
     validate!(
-        identity(market_state.coin_mint) == base_spot_market.mint.to_aligned_bytes(),
+        bytemuck::cast::<[u64; 4], [u8; 32]>(market_state.coin_mint) == base_spot_market.mint.to_bytes(),
         ErrorCode::InvalidSerumMarket,
         "Invalid base mint"
     )?;
 
     validate!(
-        identity(market_state.pc_mint) == quote_spot_market.mint.to_aligned_bytes(),
+        bytemuck::cast::<[u64; 4], [u8; 32]>(market_state.pc_mint) == quote_spot_market.mint.to_bytes(),
         ErrorCode::InvalidSerumMarket,
         "Invalid quote mint"
     )?;
