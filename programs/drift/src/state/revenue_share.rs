@@ -531,7 +531,7 @@ impl<'a> RevenueShareEscrowLoader<'a> for AccountInfo<'a> {
 
         let (discriminator, data) = Ref::map_split(data, |d| d.split_at(8));
         validate!(
-            *discriminator == RevenueShareEscrow::discriminator(),
+            *discriminator == *RevenueShareEscrow::DISCRIMINATOR,
             ErrorCode::DefaultError,
             "invalid signed_msg user orders discriminator",
         )?;
@@ -557,7 +557,7 @@ impl<'a> RevenueShareEscrowLoader<'a> for AccountInfo<'a> {
 
         let (discriminator, data) = RefMut::map_split(data, |d| d.split_at_mut(8));
         validate!(
-            *discriminator == RevenueShareEscrow::discriminator(),
+            *discriminator == *RevenueShareEscrow::DISCRIMINATOR,
             ErrorCode::DefaultError,
             "invalid signed_msg user orders discriminator",
         )?;

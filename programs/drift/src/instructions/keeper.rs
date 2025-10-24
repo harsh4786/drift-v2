@@ -1639,9 +1639,9 @@ pub fn handle_liquidate_spot_with_swap_begin<'c: 'info, 'info>(
             found_end = true;
 
             // must be the SwapEnd instruction
-            let discriminator = crate::instruction::LiquidateSpotWithSwapEnd::discriminator();
+            let discriminator = &crate::instruction::LiquidateSpotWithSwapEnd::DISCRIMINATOR;
             validate!(
-                ix.data[0..8] == discriminator,
+                ix.data[0..8] == **discriminator,
                 ErrorCode::InvalidLiquidateSpotWithSwap,
                 "last drift ix must be end of swap"
             )?;
