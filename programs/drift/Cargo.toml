@@ -23,7 +23,7 @@ solana-program = {version = ">=2.3"}
 anchor-spl = "0.31.1"
 pyth-client = "0.2.2"
 pyth-lazer-solana-contract = { git = "https://github.com/harsh4786/pyth-crosschain", features = ["no-entrypoint"]}
-pythnet-sdk = {  git = "https://github.com/harsh4786/pyth-crosschain"}
+pythnet-sdk = {  git = "https://github.com/harsh4786/pyth-crosschain", features = ["solana-program"]}
 pyth-solana-receiver-sdk = { git = "https://github.com/harsh4786/pyth-crosschain"}
 bytemuck = { version = "1.4.0" , features = ["derive",  "min_const_generics"]}
 borsh = "0.10.3"
