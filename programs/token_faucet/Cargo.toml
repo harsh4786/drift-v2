@@ -18,4 +18,4 @@ anchor-test= []
 anchor-lang = "0.31.1"
 solana-program = {version = ">=2.3"}
 anchor-spl = "0.31.1"
-bytemuck = { version = "1.17.0" }
+bytemuck = { version = "1.4.0" }
