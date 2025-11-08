@@ -19,7 +19,7 @@ drift-rs=[]
 
 [dependencies]
 anchor-lang = "0.31.1"
-solana-program = {version = "2"}
+solana-program = {version = "=2"}
 anchor-spl = "0.31.1"
 pyth-client = "0.2.2"
 pyth-lazer-solana-contract = { git = "https://github.com/harsh4786/pyth-crosschain", features = ["no-entrypoint"]}
