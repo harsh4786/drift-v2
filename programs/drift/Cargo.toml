@@ -51,3 +51,32 @@ byteorder = "1.4.3"
 bytes = "1.10.0"
 pyth = { path = "../pyth", features = ["no-entrypoint"]}
 base64 = "0.13.0"
+
+
+[patch.crates-io]
+# Patch to fix version conflicts - force Solana 2.0.0 compatibility
+curve25519-dalek = { git = "https://github.com/dalek-cryptography/curve25519-dalek", rev = "8274d5cbb6fc3f38cdc742b4798173895cd2a290" }
+# Force all dependencies to use bytemuck 1.16.1 to match Agave v2.0.0
+bytemuck = { git = "https://github.com/Lokathor/bytemuck", rev = "02ffd53"}
+# Force ALL Solana packages to use v2.0.0 (which uses bytemuck 1.16.1)
+solana-sdk = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-program = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-account-decoder = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-connection-cache = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-metrics = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-net-utils = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-quic-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-rpc-client-api = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-streamer = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-transaction-status = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-rpc-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-pubsub-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-thin-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-tpu-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-udp-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-perf = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+# Force SPL packages to use v4.0.0 (compatible with Solana 2.0.x)
+spl-associated-token-account = { git = "https://github.com/solana-labs/solana-program-library", tag = "associated-token-account-v4.0.0" }
+spl-token = { git = "https://github.com/solana-labs/solana-program-library", tag = "token-v6.0.0" }
+spl-token-2022 = { git = "https://github.com/solana-labs/solana-program-library", tag = "token-2022-v4.0.0" }
