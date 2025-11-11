@@ -19,4 +19,4 @@ anchor-test= []
 [dependencies]
 anchor-lang = "0.31.0"
 arrayref = "0.3.6"
-bytemuck = { version = "1.4.0" }
+bytemuck = { version = "1.14.0" }

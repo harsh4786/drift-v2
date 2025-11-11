@@ -16,3 +16,26 @@ codegen-units = 1
 opt-level = 3
 incremental = false
 codegen-units = 1
+
+[patch.crates-io]
+# Patch to fix version conflicts - force Solana 2.0.0 compatibility
+curve25519-dalek = { git = "https://github.com/dalek-cryptography/curve25519-dalek", rev = "8274d5cbb6fc3f38cdc742b4798173895cd2a290" }
+solana-sdk = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-program = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-account-decoder = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-connection-cache = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-metrics = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-net-utils = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-quic-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-rpc-client-api = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-streamer = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-transaction-status = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-rpc-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-pubsub-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-thin-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-tpu-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-udp-client = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-perf = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-zk-sdk = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
+solana-zk-token-sdk = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
