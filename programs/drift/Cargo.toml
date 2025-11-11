@@ -55,6 +55,7 @@ base64 = "0.13.0"
 
 [patch.crates-io]
 spl-pod = { version = "0.4.0" }
+solana-pubkey = "2"
 # Patch to fix version conflicts - force Solana 2.0.0 compatibility
 curve25519-dalek = { git = "https://github.com/dalek-cryptography/curve25519-dalek", rev = "8274d5cbb6fc3f38cdc742b4798173895cd2a290" }
 solana-sdk = { git = "https://github.com/anza-xyz/agave", rev = "16de8b75ebcd57022409b422de557dd37b1de8db" }
