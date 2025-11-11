@@ -1523,7 +1523,6 @@ dependencies = [
  "bytemuck",
  "byteorder",
  "bytes",
- "drift-macros",
  "enumflags2",
  "hex",
  "num-derive 0.3.3",
@@ -1544,15 +1543,6 @@ dependencies = [
  "switchboard-on-demand",
  "thiserror 1.0.69",
  "uint",
-]
-
-[[package]]
-name = "drift-macros"
-version = "0.1.0"
-source = "git+https://github.com/drift-labs/drift-macros.git?rev=c57d87#c57d87e073d13d43f4d1fb09fe6822915a4ccc11"
-dependencies = [
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
