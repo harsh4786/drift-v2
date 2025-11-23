@@ -18,9 +18,9 @@ default=["mainnet-beta", "no-entrypoint"]
 drift-rs=[]
 
 [dependencies]
-anchor-lang = {version = "0.31"}
+anchor-lang = {version = "0.29"}
 solana-program = {version = "2.0.15"}
-anchor-spl = {version = "0.31"}
+anchor-spl = {version = "0.29"}
 pyth-client = "0.2.2"
 pyth-lazer-solana-contract = { git = "https://github.com/harsh4786/pyth-crosschain", features = ["no-entrypoint"]}
 pythnet-sdk = {  git = "https://github.com/harsh4786/pyth-crosschain", features = ["solana-program"]}
