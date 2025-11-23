@@ -32,7 +32,7 @@ num-traits = "0.2"
 uint = { version = "0.9.1", default-features = false }
 num-derive = "0.3"
 thiserror = "1.0"
-num-integer = "0.1.44"
+num-integer = {version = "0.1.46"}
 arrayref = "0.3.6"
 base64 = "0.13.0"
 serum_dex = { git = "https://github.com/harsh4786/serum-dex", features = ["no-entrypoint"] }
